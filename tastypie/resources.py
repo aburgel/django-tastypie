@@ -2089,10 +2089,12 @@ class ModelResource(Resource):
             related_objs = []
 
             for related_bundle in bundle.data[field_name]:
-                related_bundle.obj.save()
                 related_objs.append(related_bundle.obj)
 
             related_mngr.add(*related_objs)
+
+            for related_obj in related_objs:
+                related_obj.save()
 
     def detail_uri_kwargs(self, bundle_or_obj):
         """
