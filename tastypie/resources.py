@@ -203,9 +203,9 @@ class Resource(object):
 
                 return response
             except (BadRequest, fields.ApiFieldError), e:
-                return http.HttpBadRequest(e.args[0])
+                return self._handle_bad_request(request, e, e.args[0])
             except ValidationError, e:
-                return http.HttpBadRequest(', '.join(e.messages))
+                return self._handle_validation_error(request, e)
             except Exception, e:
                 if hasattr(e, 'response'):
                     return e.response
@@ -228,6 +228,30 @@ class Resource(object):
 
         return wrapper
 
+    def _handle_bad_request(self, request, exception, message):
+        data = {
+            "exception": unicode(exception),
+            "error_message": message
+        }
+
+        desired_format = self.determine_format(request)
+        serialized = self.serialize(request, data, desired_format)
+
+        return http.HttpBadRequest(content=serialized, content_type=build_content_type(desired_format))
+
+    def _handle_validation_error(self, request, exception):
+        errors = None
+        if hasattr(exception, 'message_dict'):
+            errors = exception.message_dict
+
+        if not errors or len(errors) == 0:
+            return self._handle_bad_request(request, e, ', '.join(e.messages))
+
+        desired_format = self.determine_format(request)
+        serialized = self.serialize(request, errors, desired_format)
+
+        return http.HttpBadRequest(content=serialized, content_type=build_content_type(desired_format))
+
     def _handle_500(self, request, exception):
         import traceback
         import sys
@@ -242,6 +266,9 @@ class Resource(object):
             response_code = 404
 
         if settings.DEBUG:
+            log = logging.getLogger('django.request.tastypie')
+            log.error('Internal Server Error: %s' % request.path, exc_info=sys.exc_info(), extra={'status_code': 500, 'request':request})
+
             data = {
                 "error_message": unicode(exception),
                 "traceback": the_trace,
