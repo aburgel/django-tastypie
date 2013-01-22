@@ -223,9 +223,22 @@ class Resource(object):
 
                 return response
             except (BadRequest, fields.ApiFieldError), e:
-                return http.HttpBadRequest(e.args[0])
+                data = {
+                    "exception": unicode(e),
+                    "error_message": e.args[0]
+                }
+
+                return self.create_response(request, data, response_class=http.HttpBadRequest)
             except ValidationError, e:
-                return http.HttpBadRequest(', '.join(e.messages))
+                if hasattr(e, 'message_dict'):
+                    data = e.message_dict
+                else:
+                    data = {
+                        "exception": unicode(e),
+                        "error_message": ', '.join(e.messages)
+                    }
+
+                return self.create_response(request, data, response_class=http.HttpBadRequest)
             except Exception, e:
                 if hasattr(e, 'response'):
                     return e.response
@@ -1087,6 +1100,9 @@ class Resource(object):
             desired_format = self.determine_format(request)
         else:
             desired_format = self._meta.default_format
+
+        if len(errors) == 1:
+            errors = errors.values()[0]
 
         serialized = self.serialize(request, errors, desired_format)
         response = http.HttpBadRequest(content=serialized, content_type=build_content_type(desired_format))
