@@ -262,6 +262,9 @@ class Resource(object):
             response_code = 404
 
         if settings.DEBUG:
+            log = logging.getLogger('django.request.tastypie')
+            log.error('Internal Server Error: %s' % request.path, exc_info=sys.exc_info(), extra={'status_code': 500, 'request':request})
+
             data = {
                 "error_message": unicode(exception),
                 "traceback": the_trace,
