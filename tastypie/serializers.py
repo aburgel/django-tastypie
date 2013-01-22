@@ -179,6 +179,9 @@ class Serializer(object):
         Given some data and a format, calls the correct method to deserialize
         the data and returns the result.
         """
+        if not content:
+            return {}
+
         desired_format = None
 
         format = format.split(';')[0]
