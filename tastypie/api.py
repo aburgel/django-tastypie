@@ -79,8 +79,7 @@ class Api(object):
         """
         Deprecated. Will be removed by v1.0.0. Please use ``prepend_urls`` instead.
         """
-        warnings.warn("'override_urls' is a deprecated method & will be removed by v1.0.0. Please use ``prepend_urls`` instead.")
-        return self.prepend_urls()
+        return []
 
     def prepend_urls(self):
         """
