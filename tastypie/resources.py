@@ -2194,10 +2194,12 @@ def convert_post_to_VERB(request, verb):
 
         try:
             request.method = "POST"
+            request.body
             request._load_post_and_files()
             request.method = verb
         except AttributeError:
             request.META['REQUEST_METHOD'] = 'POST'
+            request.body
             request._load_post_and_files()
             request.META['REQUEST_METHOD'] = verb
         setattr(request, verb, request.POST)
